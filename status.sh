@@ -24,6 +24,17 @@ if [[ -f "$ROOT/state/credentials.json" ]]; then
 else
   echo "credentials: 缺失（需 bind）"
 fi
+KPID_FILE="$ROOT/state/keepalive.pid"
+if [[ -f "$KPID_FILE" ]]; then
+  KPID="$(cat "$KPID_FILE" 2>/dev/null || true)"
+  if [[ -n "${KPID:-}" ]] && kill -0 "$KPID" 2>/dev/null; then
+    echo "keepalive: 运行中 pid=$KPID"
+  else
+    echo "keepalive: 未运行（pid 文件陈旧）"
+  fi
+else
+  echo "keepalive: 未运行"
+fi
 if [[ -f "$ROOT/state/webhook.env" ]]; then
   echo "webhook.env: 已存在"
 else

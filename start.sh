@@ -37,3 +37,25 @@ nohup "$PYTHON" -u "$ROOT/bridge.py" >> "$ROOT/logs/bridge.nohup.log" 2>&1 &
 echo $! > "$PID_FILE"
 chmod 600 "$PID_FILE" 2>/dev/null || true
 echo "已启动 bridge pid=$(cat "$PID_FILE")"
+
+# 顺带保证 keepalive 在跑（桥挂了会自动 ./start.sh；-14 仍需重新扫码）
+KPID_FILE="$ROOT/state/keepalive.pid"
+keepalive_alive() {
+  local kpid=""
+  if [[ -f "$KPID_FILE" ]]; then
+    kpid="$(cat "$KPID_FILE" 2>/dev/null || true)"
+  fi
+  [[ -n "${kpid:-}" ]] && kill -0 "$kpid" 2>/dev/null
+}
+if keepalive_alive; then
+  echo "keepalive 已在运行 pid=$(cat "$KPID_FILE")"
+else
+  nohup bash "$ROOT/keepalive.sh" >> "$ROOT/logs/keepalive.nohup.log" 2>&1 &
+  # keepalive.sh 自己会写 pid 文件；稍等一下确认
+  sleep 0.3
+  if keepalive_alive; then
+    echo "已启动 keepalive pid=$(cat "$KPID_FILE")"
+  else
+    echo "keepalive 启动可能失败，请查看 logs/keepalive.log" >&2
+  fi
+fi

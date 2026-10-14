@@ -9,7 +9,7 @@
 | `bind.py` | 扫码绑定，写凭证 |
 | `bridge.py` | 长轮询 → 白名单 → POST routine webhook |
 | `reply.py` | 纯文本回微信 |
-| `start.sh` / `stop.sh` / `status.sh` | 启停与状态 |
+| `start.sh` / `stop.sh` / `status.sh` / `keepalive.sh` | 启停、状态与自动拉起 |
 | `state/` | 凭证、游标、context_token、webhook.env（权限 700） |
 | `logs/` | 运行日志：`bridge.log` / `reply.log` / `bind.log`（自动轮转，单文件约 2MB×5） |
 | `research/` | 协议调研笔记与官方包（只读参考） |
@@ -38,10 +38,13 @@ cd /workspace/wechat-ilink
 ## 启动 / 停止 / 状态
 
 ```bash
-./start.sh      # 若已在跑会先停再启
+./start.sh      # 若已在跑会先停再启；并确保 keepalive 在跑
 ./stop.sh
 ./status.sh
+./keepalive.sh  # 也可单独启动守护（start.sh 会自动拉起）
 ```
+
+`keepalive.sh` 每 60 秒检查 bridge：进程挂了且凭证仍有效时会自动 `./start.sh`。遇到错误码 -14（`STALE_TOKEN`）不会瞎重启，仍需重新扫码绑定。
 
 云端电脑重启后：
 
